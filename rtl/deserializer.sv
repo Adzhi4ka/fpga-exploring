@@ -21,10 +21,7 @@ assign deser_data_o = deser_data_buff;
 // deser_data_buff
 always_ff @( posedge clk_i )
   begin
-    if ( srst_i )
-      deser_data_buff <= 0;
-    else
-      if ( data_val_i )
+    if ( data_val_i )
         deser_data_buff[counter] <= data_i;
   end
 
