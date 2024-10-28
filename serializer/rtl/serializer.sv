@@ -21,6 +21,10 @@ logic [DATA_W-1:0]     data_i_buff;
 logic [DATA_MOD_W-1:0] data_mod_i_buff;
 logic [COUNTER_W-1:0]  counter;
 
+assign is_input_val = ( data_val_i         ) && 
+                      ( data_mod_i != 'b1  ) && 
+                      ( data_mod_i != 'b10 );
+
 // data_i_buff, data_mod_i_buff
 always_ff @( posedge clk_i )
   begin
@@ -30,7 +34,7 @@ always_ff @( posedge clk_i )
         data_mod_i_buff <= '0;
       end
     else
-      if ( ( data_val_i ) && ( data_mod_i != 'b1 ) && ( data_mod_i != 'b10 ) )
+      if ( is_input_val )
         begin
           data_i_buff     <= data_i;
           data_mod_i_buff <= !data_mod_i ? (DATA_MOD_W)'(0) : data_mod_i - 1'b1;
@@ -43,7 +47,7 @@ always_ff @( posedge clk_i )
     if ( srst_i )
       counter <= '0;
     else
-      if ( ( data_val_i ) && ( data_mod_i != 'b1 ) && ( data_mod_i != 'b10 ) )
+      if ( is_input_val )
         counter <= '0;
       else
         if ( busy_o )
@@ -56,7 +60,7 @@ always_ff @( posedge clk_i )
     if ( srst_i )
         busy_o <= 1'b0;
     else
-      if ( data_val_i && data_mod_i != 'b1 && data_mod_i != 'b10 )
+      if ( is_input_val )
         busy_o <= 1'b1;
       else if ( ( ( !data_mod_i_buff ) && ( counter == ( DATA_W )    ) ) || 
                 ( ( counter > data_mod_i_buff ) && ( data_mod_i_buff ) ) )

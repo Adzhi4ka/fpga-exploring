@@ -3,6 +3,8 @@ module serializer_tb;
 parameter DATA_W     = 16;
 parameter DATA_MOD_W = 4;
 
+parameter TEST_CNT = 1000;
+
 typedef struct {
   logic [DATA_W-1:0]     data;
   logic [DATA_MOD_W-1:0] data_mod;
@@ -84,10 +86,7 @@ task serializer_wr( mailbox #( test_arg ) generated_data,
         end
     end
 
-  wait( !is_serializer_busy );
-    
-  
-  ##1
+  wait( !is_serializer_busy );  
   srst <= 1'b1;
   ##1
   srst <= 1'b0;
@@ -95,6 +94,9 @@ endtask
 
 task serializer_r( mailbox #( test_arg ) readed_data );
   test_arg readed;
+
+  readed.data       <= '0;
+  readed.data_mod   <= '0;
 
   forever
     begin
@@ -104,19 +106,18 @@ task serializer_r( mailbox #( test_arg ) readed_data );
           return;
         end
 
-      ##1
-      if ( is_serializer_busy && is_ser_data_val )
+      @( posedge is_ser_data_val ) 
+      while ( is_ser_data_val )
         begin
+          ##1
           readed.data[readed.data_mod] <= ser_bit_data;
           readed.data_mod              <= readed.data_mod + 1'b1;
         end
 
-      if ( is_data_val )
-        begin
-          readed_data.put(readed);
-          readed.data       <= '0;
-          readed.data_mod   <= '0;
-        end
+
+      readed_data.put(readed);
+      readed.data       <= '0;
+      readed.data_mod   <= '0;
     end  
 endtask
 
@@ -125,25 +126,27 @@ task compare_data (mailbox #( test_arg ) sended_data,
   test_arg sended;
   test_arg readed;
 
-  readed_data.get(readed); // 0-ой элемент - мусор
-
-  if ( sended_data.num() != readed_data.num() )
+  if ( sended_data.num() < readed_data.num() )
     begin
-      $display( "Size of ref data: %d", sended_data.num() );
-      $display( "And sized of dut data: %d", readed_data.num() );
-      $display( "Do not match" );
+      $display( "Error! Serializer output more than need" );
       $stop();
     end
   
   for (int i = 0; i < sended_data.num(); ++i)
     begin
+      if ( !readed_data.num() )
+        begin
+          $display( "Error! Serializer output less than need" );
+          $stop();
+        end
+      
       sended_data.get(sended);
-      readed_data.get(readed);
-
-      if ((sended.data_mod == 1 || sended.data_mod == 2) && (readed.data_mod == 0))
+      if ( ( sended.data_mod == 1 ) || ( sended.data_mod == 2 ) )
         continue;
+
+      readed_data.get(readed);
     
-      if (sended.data_mod != readed.data_mod)
+      if ( sended.data_mod != readed.data_mod )
         begin
           $display("ERROR! Data mod don`t match, %d", i);
           $display("Reference data mod: %d", sended.data_mod);
@@ -176,7 +179,7 @@ initial
 
 initial 
   begin
-    gen_data( 100, generated_data );
+    gen_data( TEST_CNT, generated_data );
 
     wait( rst_done );
 
