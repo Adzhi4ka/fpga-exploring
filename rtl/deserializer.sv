@@ -22,7 +22,7 @@ assign deser_data_o = deser_data_buff;
 always_ff @( posedge clk_i )
   begin
     if ( data_val_i )
-        deser_data_buff[counter] <= data_i;
+      deser_data_buff[DATA_O_W - 1 - counter] <= data_i;
   end
 
 // counter
@@ -38,9 +38,9 @@ always_ff @( posedge clk_i )
           counter <= counter + 1'b1;
   end
 
-assign is_deserializing_finish = (counter == (COUNTER_W)'(DATA_O_W - 1)) && 
-                                 ( !deser_data_val_o                   ) && 
-                                 ( data_val_i                          );
+assign is_deserializing_finish = ( counter == (COUNTER_W)'(DATA_O_W - 1) ) && 
+                                 ( !deser_data_val_o                     ) && 
+                                 ( data_val_i                            );
 
 // deser_data_val_o
 always_ff @( posedge clk_i )
