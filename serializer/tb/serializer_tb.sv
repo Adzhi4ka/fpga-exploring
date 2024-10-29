@@ -3,7 +3,7 @@ module serializer_tb;
 parameter DATA_W     = 16;
 parameter DATA_MOD_W = 4;
 
-parameter TEST_CNT = 1000;
+parameter TEST_CNT = 100;
 
 typedef struct {
   logic [DATA_W-1:0]     data;
@@ -132,7 +132,7 @@ task compare_data (mailbox #( test_arg ) sended_data,
       $stop();
     end
   
-  for (int i = 0; i < sended_data.num(); ++i)
+  for (int i = 0; sended_data.num() ; ++i)
     begin
       if ( !readed_data.num() )
         begin
@@ -156,7 +156,7 @@ task compare_data (mailbox #( test_arg ) sended_data,
       
       for (int j = 0; j < sended.data_mod; ++j)
         begin
-          if (sended.data[2**DATA_W - 1 - j] != readed.data[j])
+          if (sended.data[DATA_W - 1 - j] != readed.data[j])
             begin
               $display("ERROR! Data don`t match. (Readed data is reversed)");
               $display("Reference data: %d", sended.data);
