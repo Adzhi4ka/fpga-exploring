@@ -1,7 +1,7 @@
 module deserializer_tb;
 
 parameter DATA_O_W = 20;
-parameter TEST_CNT = 100;
+parameter TEST_CNT = 100000;
 
 typedef struct {
   logic                data[$];
@@ -57,6 +57,14 @@ task gen_data( input   int           cnt,
       
       count_puted_bits = 0;
 
+      if ( $urandom_range(1, 0) )
+        while ( count_puted_bits < DATA_O_W )
+          begin
+            data_to_send.data.push_back(data_to_send.expected_data[count_puted_bits]);
+            data_to_send.data_val.push_back(1'b1);
+            ++count_puted_bits;
+          end
+
       while ( count_puted_bits < DATA_O_W )
         begin
           if ( $urandom_range(1, 0) )
@@ -64,12 +72,12 @@ task gen_data( input   int           cnt,
               data_to_send.data.push_back(data_to_send.expected_data[count_puted_bits]);
               data_to_send.data_val.push_back(1'b1);
               ++count_puted_bits;
+
+              continue;
             end
-          else
-            begin
-              data_to_send.data.push_back($urandom_range(1, 0));
-              data_to_send.data_val.push_back(1'b0);
-            end
+
+          data_to_send.data.push_back($urandom_range(1, 0));
+          data_to_send.data_val.push_back(1'b0);
         end
     
       data.put( data_to_send );
@@ -95,12 +103,8 @@ task deserializer_wr( mailbox #( test_arg )             generated_data,
           data     <= arg.data.pop_front();
           data_val <= arg.data_val.pop_front();
         end
-
-        ##1
-        data_val <= 1'b0;
     end
-    
-  
+
   ##1
   srst <= 1'b1;
   ##1
@@ -111,18 +115,19 @@ task deserializer_r( mailbox #( logic [DATA_O_W-1:0] ) readed_data );
   forever
     begin
       if ( srst )
-          return;
+        return;
 
       ##1
       if ( deser_data_val )
-          readed_data.put( deser_data );
+        readed_data.put( deser_data );
     end  
 endtask
 
 task compare_data (mailbox #( logic [DATA_O_W-1:0] ) sended_data,
                    mailbox #( logic [DATA_O_W-1:0] ) readed_data);
+
   logic [DATA_O_W-1:0] sended;
-  logic [DATA_O_W-1:0] readed;
+  logic [DATA_O_W-1:0] readed;  
 
   if ( sended_data.num() != readed_data.num() )
     begin
@@ -132,21 +137,19 @@ task compare_data (mailbox #( logic [DATA_O_W-1:0] ) sended_data,
       $stop();
     end
   
-  for (int i = 0; i < sended_data.num(); ++i)
+  for (int i = 0; sended_data.num(); ++i)
     begin
       sended_data.get(sended);
       readed_data.get(readed);
       
       for (int j = 0; j < DATA_O_W; ++j)
-        begin
-          if (sended[DATA_O_W - 1 - j] != readed[j])
-            begin
-              $display("ERROR! Data don`t match. (Readed data is reversed)");
-              $display("Reference data: %b", sended);
-              $display("Readed data:    %b", readed);
-              $stop();
-            end
-        end
+        if ( $isunknown(readed[j]) || ( sended[DATA_O_W - 1 - j] != readed[j] ))
+          begin
+            $display("ERROR! Data don`t match. (Readed data is reversed)");
+            $display("Reference data: %b", sended);
+            $display("Readed data:    %b", readed);
+            $stop();
+          end
     end
 endtask
 
