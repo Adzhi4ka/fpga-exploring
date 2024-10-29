@@ -26,7 +26,7 @@ assign is_input_val = ( data_val_i         ) &&
                       ( data_mod_i != 'b10 );
 
 assign is_serializing_finished = ( ( ( data_mod_i_buff == (DATA_MOD_W)'(0) ) && ( counter == ( DATA_W )     ) ) || 
-              ( ( data_mod_i_buff != (DATA_MOD_W)'(0) ) && ( counter > data_mod_i_buff ) ) );
+                                   ( ( data_mod_i_buff != (DATA_MOD_W)'(0) ) && ( counter > data_mod_i_buff ) ) );
 
 // data_i_buff, data_mod_i_buff
 always_ff @( posedge clk_i )
@@ -73,7 +73,7 @@ always_ff @( posedge clk_i )
 always_ff @( posedge clk_i )
   begin
     if ( srst_i )
-        ser_data_val_o <= 1'b0;
+      ser_data_val_o <= 1'b0;
     else
       if ( busy_o )
         if ( is_serializing_finished )

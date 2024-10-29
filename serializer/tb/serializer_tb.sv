@@ -1,9 +1,9 @@
 module serializer_tb;
 
-parameter DATA_W     = 16;
-parameter DATA_MOD_W = 4;
+parameter DATA_W     = 25;
+parameter DATA_MOD_W = 5;
 
-parameter TEST_CNT = 100;
+parameter TEST_CNT = 500000;
 
 typedef struct {
   logic [DATA_W-1:0]     data;
@@ -59,7 +59,7 @@ task gen_data( input   int           cnt,
   for ( int i = 0; i < cnt; ++i)
     begin
       data_to_send.data     = $urandom_range(2**DATA_W - 1, 0);
-      data_to_send.data_mod = $urandom_range(2**DATA_MOD_W - 1, 0);
+      data_to_send.data_mod = $urandom_range(DATA_W - 1, 0);
       data.put( data_to_send );
     end
 
@@ -146,7 +146,8 @@ task compare_data (mailbox #( test_arg ) sended_data,
 
       readed_data.get(readed);
     
-      if ( sended.data_mod != readed.data_mod )
+      if ( ( ( sended.data_mod != 0 ) && ( sended.data_mod != readed.data_mod ) ) ||
+           ( ( sended.data_mod == 0 ) && ( readed.data_mod != DATA_W ) )        )
         begin
           $display("ERROR! Data mod don`t match, %d", i);
           $display("Reference data mod: %d", sended.data_mod);
@@ -156,11 +157,11 @@ task compare_data (mailbox #( test_arg ) sended_data,
       
       for (int j = 0; j < sended.data_mod; ++j)
         begin
-          if (sended.data[DATA_W - 1 - j] != readed.data[j])
+          if ( $isunknown(readed.data[j]) || ( sended.data[DATA_W - 1 - j] != readed.data[j] ) )
             begin
-              $display("ERROR! Data don`t match. (Readed data is reversed)");
-              $display("Reference data: %d", sended.data);
-              $display("Readed data: %d", readed.data);
+              $display("ERROR! Data don`t match. (Readed data is reversed) %d", i);
+              $display("Reference data: %b", sended.data);
+              $display("Readed data:    %b", readed.data);
               $stop();
             end
         end
