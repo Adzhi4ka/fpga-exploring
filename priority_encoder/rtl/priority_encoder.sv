@@ -12,6 +12,8 @@ module priority_encoder #(
   output logic             data_val_o
 );
 
+logic [DATA_W-1:0] reverse_data_i;
+
 // data_val_o
 always_ff @( posedge clk_i )
   begin
@@ -25,30 +27,25 @@ always_ff @( posedge clk_i )
   end
 
 // data_right_o
-always_ff @( posedge clk_i )
+always_comb
   begin
-    if ( srst_i ) 
-      data_right_o <= '0;
-    else 
-      if ( data_val_i )
-        data_right_o <= data_i & (~data_i + 1'b1);
+    data_right_o <= data_i & (~data_i + 1'b1);
+  end
+
+// reverse_data_i
+always_comb 
+  begin
+    for (int i = DATA_W-1; i >= 0; --i)
+      reverse_data_i[DATA_W - 1 - i] = data_i[i];
+
+    reverse_data_i = reverse_data_i & (~reverse_data_i + 1'b1);
   end
 
 // data_left_o
-always_ff @( posedge clk_i )
+always_comb 
   begin
-    if ( srst_i ) 
-      data_left_o <= '0;
-    else 
-      if ( data_val_i )
-        for (int i = DATA_W-1; i >= 0; --i)
-          if ( data_i[i] )
-            begin
-              data_left_o <= ((DATA_W)'(0) | ((DATA_W)'(1) << i));
-              break;
-            end
-          else
-            data_left_o <= (DATA_W)'(0);
+    for (int i = DATA_W-1; i >= 0; --i)
+      data_left_o[DATA_W - 1 - i] = reverse_data_i[i];
   end
     
 endmodule
