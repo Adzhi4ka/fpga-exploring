@@ -39,7 +39,7 @@ always_ff @( posedge clk_i )
         counter <= '0;
       else
         if ( data_input_buff != 0 )
-          counter <= counter + ($clog2(DATA_W)+1)'(1);
+          counter <= counter + 1'b1;
   end
 
 // data_val_o
