@@ -81,7 +81,8 @@ endtask
 
 task priority_encoder_wr( mailbox #( test_arg ) generated_data,
                           mailbox #( test_arg ) sended_data    );
-  test_arg arg;
+  test_arg           arg;
+  logic [DATA_W-1:0] trash;
 
   while ( generated_data.num() )
     begin
@@ -93,6 +94,7 @@ task priority_encoder_wr( mailbox #( test_arg ) generated_data,
       data_val_input <= 1'b1;
 
       ##1
+      data           <= trash;
       data_val_input <= 1'b0;
     end
 
@@ -111,6 +113,7 @@ task priority_encoder_r( mailbox #( output_arg ) readed_data );
         return;
 
       ##1
+      #2
       if ( data_val_output )
         begin
           out_args = '{left_data:data_left, right_data:data_right};

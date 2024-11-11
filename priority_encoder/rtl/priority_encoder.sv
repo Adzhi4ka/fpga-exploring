@@ -23,11 +23,12 @@ endfunction
 
 logic [DATA_W-1:0] reversed_data;
 logic [DATA_W-1:0] reversed_data_left;
+logic [DATA_W-1:0] data_i_buff;
 
-assign reversed_data      = ReverseBits(data_i);
+assign reversed_data      = ReverseBits(data_i_buff);
 assign reversed_data_left = reversed_data & (-reversed_data);
 assign data_left_o        = ReverseBits(reversed_data_left);
-assign data_right_o       = data_i & (-data_i);
+assign data_right_o       = data_i_buff & (-data_i_buff);
 
 // data_val_o
 always_ff @( posedge clk_i )
@@ -36,6 +37,13 @@ always_ff @( posedge clk_i )
       data_val_o <= '0;
     else
       data_val_o <= data_val_i;
+  end
+
+// data_i_buff
+always_ff @( posedge clk_i )
+  begin
+    if ( data_val_i )
+      data_i_buff <= data_i;
   end
 
 endmodule
