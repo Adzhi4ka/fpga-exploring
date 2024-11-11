@@ -19,7 +19,7 @@ module traffic_lights #(
 
 localparam TOTAL_BLINK_CLK        = ((2 * BLINK_HALF_PERIOD_MS) * BLINK_GREEN_TIME_TICK * CLK_FREQ_HZ) / 1000;
 localparam RED_YELLOW_CLK         = (CLK_FREQ_HZ * RED_YELLOW_MS) / 1000;
-localparam BLINK_QUART_PERIOD_CLK = (BLINK_HALF_PERIOD_MS * CLK_FREQ_HZ / 4) / 1000;
+localparam BLINK_QUART_PERIOD_CLK = (BLINK_HALF_PERIOD_MS * CLK_FREQ_HZ) / 1000;
 
 // Состояния КА для светофора
 enum logic [2:0] {
@@ -45,27 +45,27 @@ always_ff @( posedge clk_0m002 )
   if ( srst_i )
     state <= OFF;
   else
-      if ( cmd_val_i )
-        case( cmd_type_i )
-          3'b000:
-            begin
-              state <= RED;
-            end
-          3'b001:
-            begin
-              state <= OFF;
-            end
-          3'b010:
-            begin
-              state <= YELLOW_BLINK;
-            end
-          default
-            begin
-              state <= next_state;
-            end
-        endcase
-      else
-        state <= next_state;
+    if ( cmd_val_i )
+      case( cmd_type_i )
+        3'b000:
+          begin
+            state <= RED;
+          end
+        3'b001:
+          begin
+            state <= OFF;
+          end
+        3'b010:
+          begin
+            state <= YELLOW_BLINK;
+          end
+        default
+          begin
+            state <= next_state;
+          end
+      endcase
+    else
+      state <= next_state;
 
 // Реализация КА для светофора
 always_comb
@@ -75,27 +75,27 @@ always_comb
     case( state )
       RED:
         begin
-          if ( timer >= red_time )
+          if ( timer >= (red_time - 1))
             next_state = RED_YELLOW;
         end
       RED_YELLOW:
         begin
-          if ( timer >= RED_YELLOW_CLK );
+          if ( timer >= (RED_YELLOW_CLK - 1) )
             next_state = GREEN;
         end
       GREEN:
         begin
-          if ( timer >= green_time )
+          if ( timer >= (green_time - 1) )
             next_state = GREEN_BLINK;
         end
       GREEN_BLINK:
         begin
-          if (timer >= TOTAL_BLINK_CLK) 
+          if (timer >= (TOTAL_BLINK_CLK - 1)) 
             next_state = YELLOW;
         end
       YELLOW:
         begin
-          if (timer >= yellow_time)
+          if (timer >= (yellow_time - 1))
             next_state = RED;
         end
       YELLOW_BLINK:
