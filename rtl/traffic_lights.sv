@@ -4,7 +4,7 @@ module traffic_lights #(
   parameter RED_YELLOW_MS,
   parameter CLK_FREQ_HZ = 2000
 )(
-  input  logic        clk_0m002,
+  input  logic        clk_i,
   input  logic        srst_i,
 
   input  logic [2:0]  cmd_type_i,
@@ -40,82 +40,85 @@ logic [15:0] green_time;
 logic [15:0] timer;
 logic [15:0] blink_counter;
 
+logic        blink_enable;
+
+
 // state
-always_ff @( posedge clk_0m002 )
+always_ff @( posedge clk_i )
   if ( srst_i )
     state <= OFF;
   else
-    if ( cmd_val_i )
-      case( cmd_type_i )
-        3'b000:
-          begin
-            state <= RED;
-          end
-        3'b001:
-          begin
-            state <= OFF;
-          end
-        3'b010:
-          begin
-            state <= YELLOW_BLINK;
-          end
-        default
-          begin
-            state <= next_state;
-          end
-      endcase
-    else
-      state <= next_state;
+    state <= next_state;
 
 // Реализация КА для светофора
 always_comb
   begin
     next_state = state;
 
-    case( state )
-      RED:
-        begin
-          if ( timer >= (red_time - 1))
-            next_state = RED_YELLOW;
-        end
-      RED_YELLOW:
-        begin
-          if ( timer >= (RED_YELLOW_CLK - 1) )
-            next_state = GREEN;
-        end
-      GREEN:
-        begin
-          if ( timer >= (green_time - 1) )
-            next_state = GREEN_BLINK;
-        end
-      GREEN_BLINK:
-        begin
-          if (timer >= (TOTAL_BLINK_CLK - 1)) 
-            next_state = YELLOW;
-        end
-      YELLOW:
-        begin
-          if (timer >= (yellow_time - 1))
-            next_state = RED;
-        end
-      YELLOW_BLINK:
-        begin
-          next_state = YELLOW_BLINK;
-        end
-      OFF:
-        begin
-          next_state = OFF;
-        end
-      
-      default:
-        begin
-          next_state = OFF;
-        end
-   endcase
+    if ( cmd_val_i )
+      case( cmd_type_i )
+        3'b000:
+          begin
+            next_state <= RED;
+          end
+        3'b001:
+          begin
+            next_state <= OFF;
+          end
+        3'b010:
+          begin
+            next_state <= YELLOW_BLINK;
+          end
+        default
+          begin
+            next_state <= next_state;
+          end
+      endcase
+    else
+      case( state )
+        RED:
+          begin
+            if ( timer >= (red_time - 1))
+              next_state = RED_YELLOW;
+          end
+        RED_YELLOW:
+          begin
+            if ( timer >= (RED_YELLOW_CLK - 1) )
+              next_state = GREEN;
+          end
+        GREEN:
+          begin
+            if ( timer >= (green_time - 1) )
+              next_state = GREEN_BLINK;
+          end
+        GREEN_BLINK:
+          begin
+            if (timer >= (TOTAL_BLINK_CLK - 1)) 
+              next_state = YELLOW;
+          end
+        YELLOW:
+          begin
+            if (timer >= (yellow_time - 1))
+              next_state = RED;
+          end
+        YELLOW_BLINK:
+          begin
+            next_state = YELLOW_BLINK;
+          end
+        OFF:
+          begin
+            next_state = OFF;
+          end
+        
+        default:
+          begin
+            next_state = OFF;
+          end
+    endcase
   end
 
 // timer
-always_ff @( posedge clk_0m002 )
+always_ff @( posedge clk_i )
   begin
     if ( srst_i )
       timer <= '0;
@@ -127,7 +130,7 @@ always_ff @( posedge clk_0m002 )
   end
 
 // red_time
-always_ff @( posedge clk_0m002 ) 
+always_ff @( posedge clk_i ) 
   begin
     if ( srst_i )
       red_time <= '0;
@@ -138,7 +141,7 @@ always_ff @( posedge clk_0m002 )
   end
 
 // yellow_time
-always_ff @( posedge clk_0m002 ) 
+always_ff @( posedge clk_i ) 
   begin
     if ( srst_i )
       yellow_time <= '0;
@@ -149,7 +152,7 @@ always_ff @( posedge clk_0m002 )
   end
 
 // green_time
-always_ff @( posedge clk_0m002 ) 
+always_ff @( posedge clk_i ) 
   begin
     if ( srst_i )
       green_time <= '0;
@@ -160,7 +163,7 @@ always_ff @( posedge clk_0m002 )
   end
 
 // blink_counter
-always_ff @( posedge clk_0m002 ) 
+always_ff @( posedge clk_i ) 
   begin
     if ( srst_i )
       blink_counter <= '0;
@@ -171,8 +174,17 @@ always_ff @( posedge clk_0m002 )
         else
           blink_counter <= blink_counter + (15)'(1);
       else
-        blink_counter <= '0;
+        blink_counter <= (15)'(1);
   end
+
+always_ff @( posedge clk_i )
+  if ( srst_i )
+    blink_enable <= '0;
+  else
+    if (blink_counter >= BLINK_QUART_PERIOD_CLK)
+      blink_enable <= '1;
+    else
+      blink_enable <= '0;
 
 // Выходные сигналы
 // red_o
@@ -207,9 +219,7 @@ always_comb
         begin
           red_o    = '0;
           yellow_o = '0;
-
-          if (blink_counter >= BLINK_QUART_PERIOD_CLK)
-            green_o  = ~green_o;
+          green_o  = blink_enable;
         end
       YELLOW:
         begin
@@ -219,12 +229,9 @@ always_comb
         end
       YELLOW_BLINK:
         begin
-          red_o = '0;
-
-          if (blink_counter >= BLINK_QUART_PERIOD_CLK)
-            yellow_o  = ~yellow_o;
-          
-          green_o = '0;
+          red_o    = '0;
+          yellow_o = blink_enable;
+          green_o  = '0;
         end
       OFF:
         begin

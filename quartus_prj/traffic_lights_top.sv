@@ -3,7 +3,7 @@ module traffic_lights_top #(
   parameter           BLINK_GREEN_TIME_TICK = 5,
   parameter           RED_YELLOW_MS = 10
 )(
-  input  logic        clk_0m002,
+  input  logic        clk_i,
   input  logic        srst_i,
 
   input  logic [2:0]  cmd_type_i,
@@ -27,7 +27,7 @@ logic        red;
 logic        yellow;
 logic        green;
 
-always_ff @( posedge clk_0m002 )
+always_ff @( posedge clk_i )
   begin
     srst     <= srst_i;
     cmd_type <= cmd_type_i;
@@ -40,7 +40,7 @@ traffic_lights #(
   .BLINK_GREEN_TIME_TICK ( BLINK_GREEN_TIME_TICK ),
   .RED_YELLOW_MS         ( RED_YELLOW_MS         )
 ) traffic_lights_test (
-  .clk_0m002             ( clk_0m002             ),
+  .clk_i             ( clk_i             ),
   .srst_i                ( srst                  ),
 
   .cmd_type_i            ( cmd_type              ),
@@ -53,7 +53,7 @@ traffic_lights #(
   .green_o               ( green                 ) 
 );
 
-always_ff @( posedge clk_0m002 )
+always_ff @( posedge clk_i )
   begin
     red_o    <= red;
     yellow_o <= yellow;
