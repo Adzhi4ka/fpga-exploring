@@ -40,7 +40,7 @@ traffic_lights #(
   .BLINK_GREEN_TIME_TICK ( BLINK_GREEN_TIME_TICK ),
   .RED_YELLOW_MS         ( RED_YELLOW_MS         )
 ) traffic_lights_test (
-  .clk_i             ( clk_i             ),
+  .clk_i                 ( clk_i                 ),
   .srst_i                ( srst                  ),
 
   .cmd_type_i            ( cmd_type              ),

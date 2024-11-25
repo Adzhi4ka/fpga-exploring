@@ -170,7 +170,7 @@ task check_output( color_times times, int cycle_count, mailbox #( int ) readed_c
   lights_clk_count counter;
   for (int i = 1; i <= cycle_count; ++i)
     begin
-      @(red_end)
+      @(red_end);
       readed_clk_cnt.get(counter.red_clk_count);
 
       if (times.red_ms * i != counter.red_clk_count / 2)
@@ -181,7 +181,7 @@ task check_output( color_times times, int cycle_count, mailbox #( int ) readed_c
           $stop();
         end
 
-      @(red_yellow_end)
+      @(red_yellow_end);
       readed_clk_cnt.get(counter.red_yellow_clk_count);
 
       if (RED_YELLOW_MS * i != counter.red_yellow_clk_count / 2)
@@ -192,7 +192,7 @@ task check_output( color_times times, int cycle_count, mailbox #( int ) readed_c
           $stop();
         end
 
-      @(green_end)
+      @(green_end);
       readed_clk_cnt.get(counter.green_clk_count);
 
       if (times.green_ms * i != counter.green_clk_count / 2)
@@ -203,7 +203,7 @@ task check_output( color_times times, int cycle_count, mailbox #( int ) readed_c
           $stop();
         end
 
-      @(green_blink_end)
+      @(green_blink_end);
       readed_clk_cnt.get(counter.green_blink_clk_off_count);
       readed_clk_cnt.get(counter.green_blink_clk_on_count);
 
@@ -227,7 +227,7 @@ task check_output( color_times times, int cycle_count, mailbox #( int ) readed_c
           $stop();
         end
 
-      @(yellow_end)
+      @(yellow_end);
       readed_clk_cnt.get(counter.yellow_clk_count);
 
       if (times.yellow_ms * i != counter.yellow_clk_count / 2)
@@ -243,23 +243,23 @@ endtask
 task noise_creator(int cycle_count);
   for (int i = 0; i < cycle_count; ++i)
     begin
-      @(red_end)
+      @(red_end);
       cmd_type <= $urandom_range(5, 3);
       cmd_data <= $urandom_range(2**15, 0);
 
-      @(red_yellow_end)
+      @(red_yellow_end);
       cmd_type <= $urandom_range(5, 3);
       cmd_data <= $urandom_range(2**15, 0);
 
-      @(green_end)
+      @(green_end);
       cmd_type <= $urandom_range(5, 3);
       cmd_data <= $urandom_range(2**15, 0);
 
-      @(green_blink_end)
+      @(green_blink_end);
       cmd_type <= $urandom_range(5, 3);
       cmd_data <= $urandom_range(2**15, 0);
 
-      @(yellow_end)
+      @(yellow_end);
       cmd_type <= $urandom_range(5, 3);
       cmd_data <= $urandom_range(2**15, 0);
     end
